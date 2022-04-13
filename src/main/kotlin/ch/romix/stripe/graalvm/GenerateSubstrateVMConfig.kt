@@ -2,11 +2,7 @@ package ch.romix.stripe.graalvm
 
 import com.google.common.reflect.ClassPath
 import com.google.gson.GsonBuilder
-import com.google.gson.annotations.SerializedName
-import com.stripe.model.StripeCollection
-import java.io.File
 import java.io.IOException
-import java.lang.reflect.Field
 import java.net.URISyntaxException
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -17,7 +13,7 @@ fun main() {
     writeReflectConfigFile(content)
 }
 
-private const val PACKAGE_ROOT = "com.stripe"
+private val PACKAGES = listOf("recurly", "stripe")
 
 @Throws(URISyntaxException::class, ClassNotFoundException::class)
 private fun getReflectConfigContent(): String {
@@ -40,24 +36,10 @@ private fun writeReflectConfigFile(serialized: String) {
 private fun getAllClasses(): ArrayList<ReflectionClassDescription> {
     val cp: ClassPath = ClassPath.from(Thread.currentThread().contextClassLoader)
     val classes = ArrayList<ReflectionClassDescription>()
-    for (info in cp.getTopLevelClassesRecursive(PACKAGE_ROOT)) {
-        val potentialClass = info.load()
-        if (isUsedWithReflection(potentialClass)) {
+    for (info in cp.allClasses) {
+        if (PACKAGES.any { info.name.contains(it) }) {
             classes.add(ReflectionClassDescription(info.name))
         }
     }
     return classes
-}
-
-private fun isUsedWithReflection(classToInspect: Class<*>): Boolean {
-    val fieldWithSerializationAnnotation = Arrays
-        .stream(classToInspect.declaredFields)
-        .filter { field: Field ->
-            field.isAnnotationPresent(
-                SerializedName::class.java
-            )
-        }
-        .findAny()
-    val subClassOfStripeCollection = classToInspect.superclass == StripeCollection::class.java
-    return fieldWithSerializationAnnotation.isPresent || subClassOfStripeCollection
 }
