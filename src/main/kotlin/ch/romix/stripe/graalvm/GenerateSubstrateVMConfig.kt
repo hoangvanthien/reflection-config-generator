@@ -13,7 +13,7 @@ fun main() {
     writeReflectConfigFile(content)
 }
 
-private val PACKAGES = listOf("recurly", "stripe")
+private val PACKAGES = listOf("com.recurly", "com.stripe")
 
 @Throws(URISyntaxException::class, ClassNotFoundException::class)
 private fun getReflectConfigContent(): String {
@@ -37,7 +37,7 @@ private fun getAllClasses(): ArrayList<ReflectionClassDescription> {
     val cp: ClassPath = ClassPath.from(Thread.currentThread().contextClassLoader)
     val classes = ArrayList<ReflectionClassDescription>()
     for (info in cp.allClasses) {
-        if (PACKAGES.any { info.name.contains(it) }) {
+        if (!info.name.contains("romix") && PACKAGES.any { info.name.contains(it) }) {
             classes.add(ReflectionClassDescription(info.name))
         }
     }
